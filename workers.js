@@ -1,6 +1,6 @@
 require("dotenv").config();
 
-export const workers = [
+const workers = [
   {
     user: process.env.ANASTASIA,
     all: true,
@@ -46,3 +46,6 @@ export const workers = [
     ],
   },
 ];
+
+
+module.exports = workers

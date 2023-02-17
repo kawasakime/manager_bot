@@ -3,9 +3,11 @@ const cron = require("node-cron");
 
 require("dotenv").config();
 
-const { workers } = require("./workers");
+const workers = require("./workers");
 
+console.log(workers)
 const bot = new Telegraf(process.env.TELEGRAM_API_TOKEN);
+const chat_id = -872858162
 
 //back 10-14
 //front 10-16, 10-14
@@ -17,7 +19,7 @@ const wellDone = [];
 function checkTime(time) {
   const hour = new Date().getHours();
 
-  return time.start <= hour && time.end >= hour;
+  return time.start <= hour && time.end > hour;
 }
 
 cron.schedule(
@@ -29,12 +31,17 @@ cron.schedule(
       worker.all ? checkTime(worker.work) : checkTime(worker.days[day])
     );
 
-    const markWorkers = currentWorkers.map((worker) => worker.user).join(", ");
-    const message = `${markWorkers} напишите в чат своё текущее задание. \nЕсли задания нет, то возьмите его у Максима, далее уведомите о нём в текущий чат.`;
+    console.log('CURRENT WORKERS', currentWorkers)
 
-    bot.telegram.sendMessage(-875342255, message);
+    if (currentWorkers.length > 0) {
+      const markWorkers = currentWorkers.map((worker) => `@${worker.user}`).join(", ");
+      const message = `${markWorkers} напишите в чат своё текущее задание. \nЕсли задания нет, то возьмите его у Максима, далее уведомите о нём в текущий чат.`;
+  
+      bot.telegram.sendMessage(chat_id, message);
 
-    checkMessages = true;
+      checkMessages = true;
+    }
+
   },
   {
     scheduled: true,
@@ -45,10 +52,21 @@ cron.schedule(
 cron.schedule(
   "15 9-19 * * 1-5",
   () => {
-    const badUsers = wellDone.map((user) => `@${user}`).join(", ");
-    const message = `${badUsers} - не написали ничего в чат.\n Отмечаю @kawasakime`;
 
-    bot.telegram.sendMessage(-875342255, message);
+    const day = new Date().getDay();
+
+    const currentWorkers = workers.filter((worker) =>
+      worker.all ? checkTime(worker.work) : checkTime(worker.days[day])
+    );
+
+    const badUsers = currentWorkers.filter((worker) => !wellDone.includes(worker.user))
+
+    if (badUsers.length > 0) {
+      const badUsersStr = badUsers.map(worker => `@${worker.user}`).join(', ')
+      const message = `${badUsersStr} - не написали ничего в чат.\n Отмечаю @kawasakime`;
+  
+      bot.telegram.sendMessage(chat_id, message);
+    }
 
     checkMessages = false;
   },
@@ -58,13 +76,14 @@ cron.schedule(
   }
 );
 
-// bot.telegram.close();
 bot.start((ctx) => ctx.reply("Привет."));
 bot.on("message", (ctx) => {
   if (checkMessages) {
     const user = ctx.message.from.username;
 
-    workers.map((worker) => worker.user).includes(user) && wellDone.push(user);
+    if (workers.map((worker) => worker.user).includes(user)) {
+      wellDone.push(user);
+    }
   }
 });
 bot.launch();
