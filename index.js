@@ -14,12 +14,20 @@ const chat_id = -872858162
 //test 15-19
 
 let checkMessages = false;
-const wellDone = [];
+let wellDone = [];
+
+// const usersHours = workers.map(item => ({user: item.user, hours: 0}))
 
 function checkTime(time) {
   const hour = new Date().getHours();
 
   return time.start <= hour && time.end > hour;
+}
+
+function checkLastTIme(time) {
+  const hour = new Date().getHours();
+
+  return time.end === hour
 }
 
 cron.schedule(
@@ -31,6 +39,8 @@ cron.schedule(
       worker.all ? checkTime(worker.work) : checkTime(worker.days[day])
     );
 
+    const lastTimeWorkers = workers.filter(worker => worker.all ? checkLastTIme(worker.work) : checkLastTIme(worker.days[day]))
+
     console.log('CURRENT WORKERS', currentWorkers)
 
     if (currentWorkers.length > 0) {
@@ -41,6 +51,21 @@ cron.schedule(
 
       checkMessages = true;
     }
+
+    if (lastTimeWorkers.length > 0) {
+      const markWorkers = lastTimeWorkers.map((worker) => `@${worker.user}`).join(", ");
+      const message = `${markWorkers} напишите на какой задаче вы закончили рабочий день и выполнили ли вы её до конца?`;
+
+      bot.telegram.sendMessage(chat_id, message);
+    }
+
+    // if (new Date().getHours() === 19) {
+      // const hoursList = usersHours.filter(item => item.hours > 0).map(item => `${item.user} - ${item.hours} часов`)
+      // const today = `${new Date().getDate()}.${new Date().getMonth()}`
+      // const message = `Количество часов за ${today}:\n` + hoursList.join('\n')
+
+      // bot.telegram.sendMessage(chat_id, message)
+    // }
 
   },
   {
@@ -68,6 +93,7 @@ cron.schedule(
       bot.telegram.sendMessage(chat_id, message);
     }
 
+    wellDone = []
     checkMessages = false;
   },
   {
@@ -83,6 +109,7 @@ bot.on("message", (ctx) => {
 
     if (workers.map((worker) => worker.user).includes(user)) {
       wellDone.push(user);
+      // usersHours[user].hours += 1
     }
   }
 });
