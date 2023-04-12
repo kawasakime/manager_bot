@@ -9,7 +9,7 @@ console.log(workers);
 const bot = new Telegraf(process.env.TELEGRAM_API_TOKEN);
 const chat_id = -872858162;
 
-const reply_chat_id = -875342255;
+const reply_chat_id = -850735714;
 
 let checkMessages = false;
 let wellDone = [];
@@ -116,11 +116,6 @@ cron.schedule(
 
 bot.start((ctx) => ctx.reply("Привет."));
 bot.on("message", (ctx) => {
-  console.log(ctx);
-  // console.log(ctx.message.chat);
-  // console.log(ctx);
-  console.log(ctx.update.message.chat);
-
   const user = ctx.message.from.username;
   const isWorker = workers.map((worker) => worker.user).includes(user);
 

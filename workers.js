@@ -75,11 +75,11 @@ const workers = [
         end: 19
       },
       {
-        start: 0,
-        end: 0
+        start: 10,
+        end: 19
       },
       {
-        start: 16,
+        start: 10,
         end: 19
       },
       {
